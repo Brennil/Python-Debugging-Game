@@ -82,15 +82,7 @@
         import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
         // IMPORTANT: Replace with your Firebase project's configuration
-        const firebaseConfig = {
-            apiKey: "AIzaSyAR16zteadug599v5PvuSSjXrbFUyQcQt8",
-          authDomain: "python-debugger.firebaseapp.com",
-          projectId: "python-debugger",
-          storageBucket: "python-debugger.firebasestorage.app",
-          messagingSenderId: "782501406778",
-          appId: "1:782501406778:web:e768aad3c984b9dfdead03",
-          measurementId: "G-GS3PP7XWQZ"
-        };
+        const firebaseConfig = JSON.parse('__FIREBASE_CONFIG__');
 
         // Initialize Firebase
         const app = initializeApp(firebaseConfig);
