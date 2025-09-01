@@ -19,9 +19,36 @@
         #progress-snake { position: relative; }
         #snake-head { width: 24px; height: 24px; background-color: #10b981; border-radius: 50%; position: absolute; right: -2px; top: 50%; transform: translateY(-50%); display: flex; align-items: center; justify-content: center; gap: 4px; border: 2px solid #047857; z-index: 10; }
         .eye { width: 4px; height: 4px; background-color: black; border-radius: 50%; }
-        .tongue { position: absolute; width: 2px; height: 8px; background-color: #ef4444; right: -6px; top: 50%; transform: translateY(-50%); border-radius: 0 0 2px 2px; animation: flick 1.5s infinite ease-in-out; transform-origin: top; }
-        .tongue::after { content: ''; position: absolute; bottom: -2px; left: -1px; width: 4px; height: 4px; background-color: #ef4444; clip-path: polygon(50% 100%, 0 0, 100% 0); }
-        @keyframes flick { 0%, 20%, 100% { transform: translateY(-50%) scaleY(1); } 10% { transform: translateY(-50%) scaleY(0); } }
+        .tongue { 
+            position: absolute; 
+            width: 8px; 
+            height: 2px; 
+            background-color: #ef4444; 
+            left: 100%;
+            top: 50%; 
+            transform: translateY(-50%); 
+            border-radius: 0 2px 2px 0; 
+            animation: flick 1.5s infinite ease-in-out; 
+            transform-origin: left;
+        }
+        .tongue::after { 
+            content: ''; 
+            position: absolute; 
+            right: -2px; 
+            top: -1px; 
+            width: 4px; 
+            height: 4px; 
+            background-color: #ef4444; 
+            clip-path: polygon(100% 50%, 0 0, 0 100%);
+        }
+        @keyframes flick { 
+            0%, 20%, 100% { 
+                transform: translateY(-50%) scaleX(1); 
+            } 
+            10% { 
+                transform: translateY(-50%) scaleX(0); 
+            } 
+        }
         #timer-bar { transition: width 0.1s linear; }
     </style>
 </head>
@@ -112,25 +139,75 @@
 
         // --- Expanded Game Data ---
         const allCodeSnippets = [
-            { id: 'syn-01', code: 'def greet(name)\n    print("Hello, " + name)', errorLine: 1, correctLineText: 'def greet(name):', explanation: 'Syntax Error: A colon ":" is missing.' },
-            { id: 'syn-02', code: 'x = 5\nif x = 5:\n    print("x is 5")', errorLine: 2, correctLineText: 'if x == 5:', explanation: 'Syntax Error: Use "==" for comparison.' },
-            { id: 'syn-03', code: 'print("Hello, World!)', errorLine: 1, correctLineText: 'print("Hello, World!")', explanation: 'SyntaxError: Missing closing quote.' },
-            { id: 'syn-04', code: 'while count < 5\n    print(count)', errorLine: 1, correctLineText: 'while count < 5:', explanation: 'Syntax Error: Missing colon.' },
-            { id: 'ind-01', code: 'for i in range(5):\nprint(i)', errorLine: 2, correctLineText: '    print(i)', explanation: 'IndentationError: Code block must be indented.' },
-            { id: 'typ-01', code: 'age = 30\nprint("Age: " + age)', errorLine: 2, correctLineText: 'print("Age: " + str(age))', explanation: 'TypeError: Cannot concatenate string and integer.' },
-            { id: 'nam-01', code: 'message = "Hi"\nprint(mesage)', errorLine: 2, correctLineText: 'print(message)', explanation: 'NameError: Variable name typo.' },
-            { id: 'idx-01', code: 'my_list = [1,2,3]\nprint(my_list[3])', errorLine: 2, correctLineText: 'print(my_list[2])', explanation: 'IndexError: Index is out of range.' },
-            { id: 'key-01', code: 'd={"k":"v"}\nprint(d["key"])', errorLine: 2, correctLineText: 'print(d["k"])', explanation: 'KeyError: Key does not exist.' },
-            { id: 'arg-01', code: 'def add(a,b):\n    return a+b\nresult=add(5)', errorLine: 3, correctLineText: 'result=add(5, 0)', explanation: 'TypeError: Missing required argument.', validationRegex: '^result\\s*=\\s*add\\s*\\(\\s*5\\s*,\\s*-?\\d+(\\.\\d+)?\\s*\\)\\s*(#.*)?$' },
-            { id: 'syn-05', code: 'my_list = [1, 2, 3,\nprint(my_list)', errorLine: 1, correctLineText: 'my_list = [1, 2, 3]', explanation: 'SyntaxError: The list is missing a closing bracket "]"' },
-            { id: 'ind-02', code: 'def my_func():\nreturn "hello"', errorLine: 2, correctLineText: '    return "hello"', explanation: 'IndentationError: The return statement inside a function must be indented.' },
-            { id: 'typ-02', code: 'result = "5" + 10', errorLine: 1, correctLineText: 'result = int("5") + 10', explanation: 'TypeError: Cannot add a string and an integer. Convert the string to an integer first.' },
-            { id: 'nam-02', code: 'x = 10\ny = X + 5', errorLine: 2, correctLineText: 'y = x + 5', explanation: 'NameError: "X" is not defined. Python variables are case-sensitive.' },
-            { id: 'idx-02', code: 'word = "Python"\nprint(word[6])', errorLine: 2, correctLineText: 'print(word[5])', explanation: 'IndexError: String indices are 0-based. The last character is at index 5.' },
-            { id: 'key-02', code: 'ages = {"Alice": 30}\nprint(ages["Bob"])', errorLine: 2, correctLineText: 'print(ages["Alice"])', explanation: 'KeyError: The key "Bob" does not exist in the dictionary.' },
-            { id: 'arg-02', code: 'print("Hi", sep=, "There")', errorLine: 1, correctLineText: 'print("Hi", "There", sep=",")', explanation: 'SyntaxError: The sep argument needs a value, like a comma string.' },
-            { id: 'log-01', code: 'numbers = [1,2,3]\nfor n in numbers:\n    if n%2=0:\n        print("even")', errorLine: 3, correctLineText: '    if n%2==0:', explanation: 'Logic Error: Use "==" for comparison.' },
-            { id: 'log-02', code: 'i = 0\nwhile i < 5:\n    print(i)', errorLine: 3, correctLineText: '    i += 1', explanation: 'Logic Error: Infinite loop, counter not incremented.' }
+            // Syntax Errors
+            { id: 'syn-01', code: 'def greet(name)\n    print("Hello, " + name)', errorLine: 1, correctLineText: 'def greet(name):', explanation: 'Syntax Error: A function definition must end with a colon (:).' },
+            { id: 'syn-02', code: 'x = 10\nif x = 5:\n    print("x is 5")', errorLine: 2, correctLineText: 'if x == 5:', explanation: 'Syntax Error: Use "==" for comparison. A single "=" is for assignment.' },
+            { id: 'syn-03', code: 'print("Hello, World!)', errorLine: 1, correctLineText: 'print("Hello, World!")', explanation: 'SyntaxError: The string is missing a closing quote (").' },
+            { id: 'syn-04', code: 'items = [1, 2, 3\nprint(items)', errorLine: 1, correctLineText: 'items = [1, 2, 3]', explanation: 'SyntaxError: The list is missing a closing bracket (]).' },
+            { id: 'syn-05', code: 'for i in range(10)\n    print(i)', errorLine: 1, correctLineText: 'for i in range(10):', explanation: 'Syntax Error: A for loop statement must end with a colon (:).' },
+            { id: 'syn-06', code: 'x = 1\nelse:\n    x = 2', errorLine: 2, correctLineText: 'if False:', explanation: 'SyntaxError: An "else" statement must be preceded by an "if" or "elif" block.' },
+            { id: 'syn-07', code: 'my_func(a=1, 2)', errorLine: 1, correctLineText: 'my_func(1, a=2)', explanation: 'SyntaxError: A positional argument cannot follow a keyword argument.' },
+            { id: 'syn-08', code: 'class MyClass\n    pass', errorLine: 1, correctLineText: 'class MyClass:', explanation: 'SyntaxError: A class definition must end with a colon (:).' },
+            { id: 'syn-09', code: 'name = "Alice"\nprint(f"Hello, {name")', errorLine: 2, correctLineText: 'print(f"Hello, {name}")', explanation: 'SyntaxError: An f-string is missing its closing curly brace (}).' },
+            { id: 'syn-10', code: 'try:\n    x = 1/0\nexcept ZeroDivisionError\n    print("Error")', errorLine: 3, correctLineText: 'except ZeroDivisionError:', explanation: 'SyntaxError: An "except" clause must end with a colon (:).' },
+
+            // Indentation Errors
+            { id: 'ind-01', code: 'def my_function():\nprint("Indented")', errorLine: 2, correctLineText: '    print("Indented")', explanation: 'IndentationError: The body of a function must be indented.' },
+            { id: 'ind-02', code: 'for i in range(3):\n    print(i)\n print("Done")', errorLine: 3, correctLineText: 'print("Done")', explanation: 'IndentationError: This line has an unexpected indentation level.' },
+            { id: 'ind-03', code: 'if True:\n  x = 5\n    y = 10', errorLine: 3, correctLineText: '  y = 10', explanation: 'IndentationError: Unexpected indent. Lines in the same block must have the same indentation.' },
+            
+            // Name Errors
+            { id: 'nam-01', code: 'message = "Hi"\nprint(mesage)', errorLine: 2, correctLineText: 'print(message)', explanation: 'NameError: The variable "mesage" is not defined. Check for typos.' },
+            { id: 'nam-02', code: 'import math\narea = MATH.pi * r**2', errorLine: 2, correctLineText: 'area = math.pi * r**2', explanation: 'NameError: "MATH" is not defined. Module names are case-sensitive.' },
+            { id: 'nam-03', code: 'def calculate():\n    total = 100\nprint(total)', errorLine: 3, correctLineText: 'calculate()', explanation: 'NameError: The variable "total" is local to the function and cannot be accessed outside.' },
+            { id: 'nam-04', code: 'Print("Hello")', errorLine: 1, correctLineText: 'print("Hello")', explanation: 'NameError: The function "Print" is not defined. Function names are case-sensitive.' },
+
+            // Type Errors
+            { id: 'typ-01', code: 'age = 30\nprint("Age: " + age)', errorLine: 2, correctLineText: 'print("Age: " + str(age))', explanation: 'TypeError: Cannot concatenate a string and an integer. Convert the integer to a string first.' },
+            { id: 'typ-02', code: 'count = len(12345)', errorLine: 1, correctLineText: 'count = len("12345")', explanation: 'TypeError: The len() function does not work on integers. It works on sequences like strings, lists, etc.' },
+            { id: 'typ-03', code: 'for i in 10:\n    print(i)', errorLine: 1, correctLineText: 'for i in range(10):', explanation: 'TypeError: An integer is not iterable. You need to loop over a sequence, like range(10).' },
+            { id: 'typ-04', code: 'my_set = {1, 2, 3}\nprint(my_set[0])', errorLine: 2, correctLineText: 'print(1 in my_set)', explanation: "TypeError: Sets are unordered and don't support indexing. Use the 'in' keyword to check for membership." },
+            { id: 'typ-05', code: 'import math\nprint(math.pi())', errorLine: 2, correctLineText: 'print(math.pi)', explanation: "TypeError: 'float' object is not callable. `math.pi` is a value, not a function, so remove the parentheses." },
+            { id: 'typ-06', code: 'def add(a,b):\n    return a+b\nresult=add(5)', errorLine: 3, correctLineText: 'result=add(5, 0)', explanation: 'TypeError: Missing required argument. The function expects two arguments but only got one.', validationRegex: '^result\\s*=\\s*add\\s*\\(\\s*5\\s*,\\s*-?\\d+(\\.\\d+)?\\s*\\)\\s*(#.*)?$' },
+            { id: 'typ-07', code: 'data = None\nprint(data["key"])', errorLine: 2, correctLineText: 'if data is not None:', explanation: "TypeError: Cannot access items from a 'NoneType' object. Always check if an object is None before using it." },
+
+            // Index Errors
+            { id: 'idx-01', code: 'my_list = [1, 2, 3]\nprint(my_list[3])', errorLine: 2, correctLineText: 'print(my_list[2])', explanation: 'IndexError: List index out of range. The last item is at index 2.' },
+            { id: 'idx-02', code: 'word = "Python"\nlast_char = word[6]', errorLine: 2, correctLineText: 'last_char = word[5]', explanation: 'IndexError: String index out of range. Indices are 0-based, so the last character is at index 5.' },
+            
+            // Key Errors
+            { id: 'key-01', code: 'd = {"k": "v"}\nprint(d["key"])', errorLine: 2, correctLineText: 'print(d["k"])', explanation: 'KeyError: The key "key" does not exist in the dictionary.' },
+            { id: 'key-02', code: 'person = {"name": "John"}\nprint(person["age"])', errorLine: 2, correctLineText: 'print(person.get("age"))', explanation: 'KeyError: The key "age" is not in the dictionary. Using .get("age") is a safer way to access keys.' },
+            
+            // Attribute Errors
+            { id: 'att-01', code: 'x = 5\nx.append(1)', errorLine: 2, correctLineText: 'my_list = [5]', explanation: "AttributeError: 'int' object has no attribute 'append'. Append is a method for lists." },
+            { id: 'att-02', code: 'my_string = "hello"\nmy_string.sort()', errorLine: 2, correctLineText: 'sorted_string = sorted(my_string)', explanation: "AttributeError: 'str' object has no attribute 'sort'. Sorting is done with the sorted() function for strings." },
+            
+            // Value Errors
+            { id: 'val-01', code: 'number = int("abc")', errorLine: 1, correctLineText: 'number = int("123")', explanation: 'ValueError: Cannot convert a non-numeric string like "abc" to an integer.' },
+            { id: 'val-02', code: 'a, b = [1, 2, 3]', errorLine: 1, correctLineText: 'a, b, c = [1, 2, 3]', explanation: 'ValueError: Too many values to unpack. The number of variables must match the number of items in the list.' },
+            
+            // Zero Division Errors
+            { id: 'zer-01', code: 'result = 100 / 0', errorLine: 1, correctLineText: 'result = 100 / 1', explanation: 'ZeroDivisionError: Cannot divide by zero.' },
+
+            // Logical Errors (Code runs but logic is flawed)
+            { id: 'log-01', code: 'i = 0\nwhile i < 5:\n    print(i)', errorLine: 3, correctLineText: '    i += 1', explanation: 'Logical Error: This is an infinite loop because the counter "i" is never incremented.' },
+            { id: 'log-02', code: '# x should be no more than 5\nx = 10\nif x > 5:', errorLine: 3, correctLineText: 'if x <= 5:', explanation: 'Logical Error: "No more than 5" means less than or equal to 5 (<=).' },
+            { id: 'log-03', code: 'role = "guest"\nif role == "admin" or "editor":\n    print("Access Granted")', errorLine: 2, correctLineText: 'if role == "admin" or role == "editor":', explanation: 'Logical Error: `"editor"` is a non-empty string, which is always `True`. You must compare `role` to each value.' },
+            { id: 'log-04', code: '# price must be at least 20\nprice = 15\nif price > 20:', errorLine: 3, correctLineText: 'if price >= 20:', explanation: 'Logical Error: "At least 20" means greater than or equal to 20 (>=).' },
+            { id: 'log-05', code: 'numbers = [1, 2, 3]\nnumbers = numbers.append(4)', errorLine: 2, correctLineText: 'numbers.append(4)', explanation: 'Logical Error: The `.append()` method modifies the list in-place and returns `None`.' },
+            { id: 'log-06', code: 'def double(nums):\n    for n in nums:\n        return n * 2', errorLine: 3, correctLineText: '        print(n*2)', explanation: 'Logical Error: `return` exits the function on the first loop. The loop will never complete.' },
+            { id: 'log-07', code: '# user must not be "guest"\nuser = "admin"\nif user == "guest":', errorLine: 3, correctLineText: 'if user != "guest":', explanation: 'Logical Error: To check if a user is NOT "guest", use the not equal operator (!=).' },
+            { id: 'log-08', code: 'if x == 1 or x == 2 and y == 3:', errorLine: 1, correctLineText: 'if (x == 1 or x == 2) and y == 3:', explanation: 'Logical Error: `and` has higher precedence than `or`. Use parentheses to group conditions correctly.' },
+            { id: 'log-09', code: 'my_list = [1, 1, 2, 3]\nunique_items = set(list)', errorLine: 2, correctLineText: 'unique_items = set(my_list)', explanation: "Logical Error: You are converting the built-in type `list` to a set, not your variable `my_list`." },
+            { id: 'log-10', code: 'def change(val):\n    val = 10\nx=5\nchange(x)\n# now x should be 10', errorLine: 2, correctLineText: '    return 10', explanation: 'Logical Error: Integers are immutable. The function changes its local copy, not the original variable.' },
+            
+            // Miscellaneous common mistakes
+            { id: 'misc-01', code: 'my_dict = {\n"key" = "value"\n}', errorLine: 2, correctLineText: '"key": "value"', explanation: 'SyntaxError: Use a colon (:) to separate keys and values in a dictionary, not an equals sign (=).' },
+            { id: 'misc-02', code: 'my_tuple = (1, 2, 3)\nmy_tuple[0] = 0', errorLine: 2, correctLineText: 'my_list = list(my_tuple)', explanation: "TypeError: Tuples are immutable and their items cannot be changed after creation." },
+            { id: 'misc-03', code: 'if "a" in "apple":\n    print("Found it!")\nelse if "b" in "banana":\n    print("Found that!")', errorLine: 3, correctLineText: 'elif "b" in "banana":', explanation: 'SyntaxError: In Python, the correct keyword is `elif`, not `else if`.' },
+            { id: 'misc-04', code: 'numbers = [1,2,3]\nmore_numbers = (4,5,6)\nall_numbers = numbers + more_numbers', errorLine: 3, correctLineText: 'all_numbers = numbers + list(more_numbers)', explanation: "TypeError: You can only concatenate a list with another list, not a tuple." },
+            { id: 'misc-05', code: 'def my_func(items=[]):\n    items.append(1)\n    return items', errorLine: 1, correctLineText: 'def my_func(items=None):', explanation: "Logical Error: Using a mutable type like a list as a default argument can cause unexpected behavior across function calls." }
         ];
 
         // --- Game State ---
@@ -155,6 +232,7 @@
 
         async function recordAnswer(questionId, isCorrect, points, timeTaken) {
             try {
+                if (!userId) return; // Don't record if not signed in
                 await addDoc(collection(db, "game_sessions"), {
                     userId: userId,
                     studentName: studentName,
@@ -337,3 +415,4 @@
     </script>
 </body>
 </html>
+
