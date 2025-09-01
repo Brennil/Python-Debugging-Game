@@ -192,12 +192,12 @@
 
             // Logical Errors (Code runs but logic is flawed)
             { id: 'log-01', code: 'i = 0\nwhile i < 5:\n    print(i)', errorLine: 3, correctLineText: '    i += 1', explanation: 'Logical Error: This is an infinite loop because the counter "i" is never incremented.' },
-            { id: 'log-02', code: '# x should be no more than 5\nx = 10\nif x > 5:', errorLine: 3, correctLineText: 'if x <= 5:', explanation: 'Logical Error: "No more than 5" means less than or equal to 5 (<=).' },
+            { id: 'log-02', code: '# x should be no more than 5\nx = 10\nif x > 5:\n    pass', errorLine: 3, correctLineText: 'if x <= 5:', explanation: 'Logical Error: "No more than 5" means less than or equal to 5 (<=).' },
             { id: 'log-03', code: 'role = "guest"\nif role == "admin" or "editor":\n    print("Access Granted")', errorLine: 2, correctLineText: 'if role == "admin" or role == "editor":', explanation: 'Logical Error: `"editor"` is a non-empty string, which is always `True`. You must compare `role` to each value.' },
-            { id: 'log-04', code: '# price must be at least 20\nprice = 15\nif price > 20:', errorLine: 3, correctLineText: 'if price >= 20:', explanation: 'Logical Error: "At least 20" means greater than or equal to 20 (>=).' },
+            { id: 'log-04', code: '# price must be at least 20\nprice = 15\nif price > 20:\n    pass', errorLine: 3, correctLineText: 'if price >= 20:', explanation: 'Logical Error: "At least 20" means greater than or equal to 20 (>=).' },
             { id: 'log-05', code: 'numbers = [1, 2, 3]\nnumbers = numbers.append(4)', errorLine: 2, correctLineText: 'numbers.append(4)', explanation: 'Logical Error: The `.append()` method modifies the list in-place and returns `None`.' },
             { id: 'log-06', code: 'def double(nums):\n    for n in nums:\n        return n * 2', errorLine: 3, correctLineText: '        print(n*2)', explanation: 'Logical Error: `return` exits the function on the first loop. The loop will never complete.' },
-            { id: 'log-07', code: '# user must not be "guest"\nuser = "admin"\nif user == "guest":', errorLine: 3, correctLineText: 'if user != "guest":', explanation: 'Logical Error: To check if a user is NOT "guest", use the not equal operator (!=).' },
+            { id: 'log-07', code: '# user must not be "guest"\nuser = "admin"\nif user == "guest":\n    pass', errorLine: 3, correctLineText: 'if user != "guest":', explanation: 'Logical Error: To check if a user is NOT "guest", use the not equal operator (!=).' },
             { id: 'log-08', code: 'if x == 1 or x == 2 and y == 3:', errorLine: 1, correctLineText: 'if (x == 1 or x == 2) and y == 3:', explanation: 'Logical Error: `and` has higher precedence than `or`. Use parentheses to group conditions correctly.' },
             { id: 'log-09', code: 'my_list = [1, 1, 2, 3]\nunique_items = set(list)', errorLine: 2, correctLineText: 'unique_items = set(my_list)', explanation: "Logical Error: You are converting the built-in type `list` to a set, not your variable `my_list`." },
             { id: 'log-10', code: 'def change(val):\n    val = 10\nx=5\nchange(x)\n# now x should be 10', errorLine: 2, correctLineText: '    return 10', explanation: 'Logical Error: Integers are immutable. The function changes its local copy, not the original variable.' },
@@ -325,7 +325,8 @@
                     const regex = new RegExp(currentSnippet.validationRegex);
                     isTextCorrect = regex.test(userAnswerText);
                 } else {
-                    isTextCorrect = userAnswerText.replace(/\s+/g, ' ') === correctLineText.replace(/\s+/g, ' ');
+                    // Normalize by removing all whitespace for flexible comparison
+                    isTextCorrect = userAnswerText.replace(/\s/g, '') === correctLineText.replace(/\s/g, '');
                 }
 
                 if (isTextCorrect) {
