@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Python Error Corrector Game</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .code-font { font-family: 'Fira Code', monospace; }
+        .code-line-container { display: flex; align-items: center; padding: 0.125rem 0.5rem; border-radius: 0.375rem; border: 2px solid transparent; transition: background-color 0.2s, border-color 0.2s; }
+        .line-number { width: 2em; text-align: right; margin-right: 1em; color: #6b7280; user-select: none; }
+        .clickable .code-line-container:hover { background-color: #374151; }
+        .clickable .code-line-container { cursor: pointer; }
+        .selected { border-color: #38bdf8; background-color: #1e3a8a; }
+        #answer-input:focus { border-color: #22d3ee; box-shadow: 0 0 0 3px rgba(34, 211, 238, 0.3); outline: none; }
+        #progress-snake { position: relative; }
+        #snake-head { width: 24px; height: 24px; background-color: #10b981; border-radius: 50%; position: absolute; right: -2px; top: 50%; transform: translateY(-50%); display: flex; align-items: center; justify-content: center; gap: 4px; border: 2px solid #047857; z-index: 10; }
+        .eye { width: 4px; height: 4px; background-color: black; border-radius: 50%; }
+        .tongue { position: absolute; width: 2px; height: 8px; background-color: #ef4444; right: -6px; top: 50%; transform: translateY(-50%); border-radius: 0 0 2px 2px; animation: flick 1.5s infinite ease-in-out; transform-origin: top; }
+        .tongue::after { content: ''; position: absolute; bottom: -2px; left: -1px; width: 4px; height: 4px; background-color: #ef4444; clip-path: polygon(50% 100%, 0 0, 100% 0); }
+        @keyframes flick { 0%, 20%, 100% { transform: translateY(-50%) scaleY(1); } 10% { transform: translateY(-50%) scaleY(0); } }
+        #timer-bar { transition: width 0.1s linear; }
+    </style>
+</head>
+<body class="bg-gray-900 text-white flex items-center justify-center min-h-screen p-4">
+
+    <div class="w-full max-w-2xl mx-auto">
+        <!-- Start Screen -->
+        <div id="start-screen" class="bg-gray-800 rounded-xl shadow-2xl p-8 text-center">
+            <h1 class="text-4xl font-bold text-cyan-400 mb-4">Python Error Corrector</h1>
+            <p class="text-gray-300 mb-8">Find and fix errors in Python code. The faster you answer, the higher your score!</p>
+            <button id="start-btn" class="bg-white text-gray-800 font-semibold py-3 px-6 rounded-lg shadow-lg flex items-center justify-center mx-auto transition-transform transform hover:scale-105">
+                <svg class="w-6 h-6 mr-3" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="48px" height="48px"><path fill="#FFC107" d="M43.611,20.083H42V20H24v8h11.303c-1.649,4.657-6.08,8-11.303,8c-6.627,0-12-5.373-12-12c0-6.627,5.373-12,12-12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C12.955,4,4,12.955,4,24c0,11.045,8.955,20,20,20c11.045,0,20-8.955,20-20C44,22.659,43.862,21.35,43.611,20.083z"/><path fill="#FF3D00" d="M6.306,14.691l6.571,4.819C14.655,15.108,18.961,12,24,12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C16.318,4,9.656,8.337,6.306,14.691z"/><path fill="#4CAF50" d="M24,44c5.166,0,9.86-1.977,13.409-5.192l-6.19-5.238C29.211,35.091,26.715,36,24,36c-5.202,0-9.619-3.317-11.283-7.946l-6.522,5.025C9.505,39.556,16.227,44,24,44z"/><path fill="#1976D2" d="M43.611,20.083H42V20H24v8h11.303c-0.792,2.237-2.231,4.166-4.087,5.574l6.19,5.238C39.904,36.338,44,30.65,44,24C44,22.659,43.862,21.35,43.611,20.083z"/></svg>
+                Sign in with Google
+            </button>
+        </div>
+
+        <!-- Game Container -->
+        <div id="game-container" class="hidden">
+            <div class="bg-gray-800 rounded-xl shadow-2xl p-6 md:p-8">
+                <div class="flex justify-between items-center mb-6 border-b border-gray-700 pb-4">
+                    <div>
+                        <h1 class="text-2xl md:text-3xl font-bold text-cyan-400">Python Error Corrector</h1>
+                        <p id="user-display" class="text-sm text-gray-400"></p>
+                    </div>
+                    <div class="text-right">
+                        <div class="text-sm text-gray-400">Score</div>
+                        <div id="score" class="text-2xl font-bold">0</div>
+                    </div>
+                </div>
+                <div id="question-counter" class="text-center text-gray-400 mb-2 font-medium">Question 1 of 10</div>
+                <div class="w-full bg-gray-700 rounded-full h-4 mb-2 border-2 border-gray-600">
+                    <div id="progress-snake" class="bg-gradient-to-r from-emerald-400 to-cyan-500 h-full rounded-l-full transition-all duration-500 ease-out" style="width: 0%"><div id="snake-head"><div class="eye"></div><div class="eye"></div><div class="tongue"></div></div></div>
+                </div>
+                <div class="w-full bg-gray-700 rounded-full h-2.5 mb-6"><div id="timer-bar" class="bg-yellow-400 h-2.5 rounded-full" style="width: 100%"></div></div>
+                <p id="instructions" class="text-center text-gray-300 mb-6">1. Click the line of code with the error.</p>
+                <div id="code-snippet-wrapper" class="bg-gray-900 rounded-lg p-4 mb-4"><pre><code id="code-snippet" class="text-sm md:text-base leading-relaxed code-font"></code></pre></div>
+                <div id="answer-area" class="mt-4 hidden"><div class="flex flex-col sm:flex-row gap-2"><input type="text" id="answer-input" class="code-font w-full bg-gray-700 text-white border-2 border-gray-600 rounded-lg py-3 px-4" placeholder="2. Now, type the corrected line..."><button id="submit-btn" class="bg-cyan-500 hover:bg-cyan-600 text-white font-bold py-3 px-6 rounded-lg shadow-lg transition-transform transform hover:scale-105">Submit</button></div></div>
+                <div id="feedback-container" class="min-h-[80px] mt-4 p-4 rounded-lg flex-col justify-center items-center text-center hidden"><p id="feedback-message" class="text-lg font-semibold"></p><p id="explanation" class="mt-2 text-gray-300 whitespace-pre-wrap"></p></div>
+                <div id="button-container" class="mt-6 text-center"><button id="next-btn" class="bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-3 px-8 rounded-lg shadow-lg transition-transform transform hover:scale-105 hidden">Next Question</button></div>
+            </div>
+        </div>
+        
+        <!-- Final Score Modal -->
+        <div id="final-score-modal" class="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center hidden">
+            <div class="bg-gray-800 rounded-xl shadow-2xl p-8 text-center transform scale-95 transition-transform">
+                <h2 class="text-3xl font-bold mb-2 text-cyan-400">Game Over!</h2>
+                <p class="text-gray-300 mb-4">Your final score is:</p>
+                <p id="final-score" class="text-6xl font-bold mb-8">0</p>
+                <button id="restart-btn" class="bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-3 px-8 rounded-lg shadow-lg transition-transform transform hover:scale-105">Play Again</button>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        // Firebase Imports
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getAuth, GoogleAuthProvider, signInWithPopup } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+        import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+        // IMPORTANT: Replace with your Firebase project's configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyAR16zteadug599v5PvuSSjXrbFUyQcQt8",
+            authDomain: "python-debugger.firebaseapp.com",
+            projectId: "python-debugger",
+            storageBucket: "python-debugger.appspot.com",
+            messagingSenderId: "782501406778",
+            appId: "1:782501406778:web:e768aad3c984b9dfdead03",
+            measurementId: "G-GS3PP7XWQZ"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        const provider = new GoogleAuthProvider();
+
+        // --- DOM Element References ---
+        const startScreen = document.getElementById('start-screen');
+        const startBtn = document.getElementById('start-btn');
+        const gameContainer = document.getElementById('game-container');
+        const userDisplay = document.getElementById('user-display');
+        const codeSnippetEl = document.getElementById('code-snippet');
+        const scoreEl = document.getElementById('score');
+        const nextBtn = document.getElementById('next-btn');
+        const restartBtn = document.getElementById('restart-btn');
+        const feedbackContainer = document.getElementById('feedback-container');
+        const feedbackMessageEl = document.getElementById('feedback-message');
+        const explanationEl = document.getElementById('explanation');
+        const finalScoreModal = document.getElementById('final-score-modal');
+        const finalScoreEl = document.getElementById('final-score');
+        const questionCounterEl = document.getElementById('question-counter');
+        const answerInput = document.getElementById('answer-input');
+        const submitBtn = document.getElementById('submit-btn');
+        const progressSnakeEl = document.getElementById('progress-snake');
+        const timerBarEl = document.getElementById('timer-bar');
+
+        // --- Expanded Game Data ---
+        const allCodeSnippets = [
+            { id: 'syn-01', code: 'def greet(name)\n    print("Hello, " + name)', errorLine: 1, correctLineText: 'def greet(name):', explanation: 'Syntax Error: A colon ":" is missing.' },
+            { id: 'syn-02', code: 'x = 5\nif x = 5:\n    print("x is 5")', errorLine: 2, correctLineText: 'if x == 5:', explanation: 'Syntax Error: Use "==" for comparison.' },
+            { id: 'syn-03', code: 'print("Hello, World!)', errorLine: 1, correctLineText: 'print("Hello, World!")', explanation: 'SyntaxError: Missing closing quote.' },
+            { id: 'syn-04', code: 'while count < 5\n    print(count)', errorLine: 1, correctLineText: 'while count < 5:', explanation: 'Syntax Error: Missing colon.' },
+            { id: 'ind-01', code: 'for i in range(5):\nprint(i)', errorLine: 2, correctLineText: '    print(i)', explanation: 'IndentationError: Code block must be indented.' },
+            { id: 'typ-01', code: 'age = 30\nprint("Age: " + age)', errorLine: 2, correctLineText: 'print("Age: " + str(age))', explanation: 'TypeError: Cannot concatenate string and integer.' },
+            { id: 'nam-01', code: 'message = "Hi"\nprint(mesage)', errorLine: 2, correctLineText: 'print(message)', explanation: 'NameError: Variable name typo.' },
+            { id: 'idx-01', code: 'my_list = [1,2,3]\nprint(my_list[3])', errorLine: 2, correctLineText: 'print(my_list[2])', explanation: 'IndexError: Index is out of range.' },
+            { id: 'key-01', code: 'd={"k":"v"}\nprint(d["key"])', errorLine: 2, correctLineText: 'print(d["k"])', explanation: 'KeyError: Key does not exist.' },
+            { id: 'arg-01', code: 'def add(a,b):\n    return a+b\nresult=add(5)', errorLine: 3, correctLineText: 'result=add(5, 0)', explanation: 'TypeError: Missing required argument.', validationRegex: '^result\\s*=\\s*add\\s*\\(\\s*5\\s*,\\s*-?\\d+(\\.\\d+)?\\s*\\)\\s*(#.*)?$' },
+            { id: 'syn-05', code: 'my_list = [1, 2, 3,\nprint(my_list)', errorLine: 1, correctLineText: 'my_list = [1, 2, 3]', explanation: 'SyntaxError: The list is missing a closing bracket "]"' },
+            { id: 'ind-02', code: 'def my_func():\nreturn "hello"', errorLine: 2, correctLineText: '    return "hello"', explanation: 'IndentationError: The return statement inside a function must be indented.' },
+            { id: 'typ-02', code: 'result = "5" + 10', errorLine: 1, correctLineText: 'result = int("5") + 10', explanation: 'TypeError: Cannot add a string and an integer. Convert the string to an integer first.' },
+            { id: 'nam-02', code: 'x = 10\ny = X + 5', errorLine: 2, correctLineText: 'y = x + 5', explanation: 'NameError: "X" is not defined. Python variables are case-sensitive.' },
+            { id: 'idx-02', code: 'word = "Python"\nprint(word[6])', errorLine: 2, correctLineText: 'print(word[5])', explanation: 'IndexError: String indices are 0-based. The last character is at index 5.' },
+            { id: 'key-02', code: 'ages = {"Alice": 30}\nprint(ages["Bob"])', errorLine: 2, correctLineText: 'print(ages["Alice"])', explanation: 'KeyError: The key "Bob" does not exist in the dictionary.' },
+            { id: 'arg-02', code: 'print("Hi", sep=, "There")', errorLine: 1, correctLineText: 'print("Hi", "There", sep=",")', explanation: 'SyntaxError: The sep argument needs a value, like a comma string.' },
+            { id: 'log-01', code: 'numbers = [1,2,3]\nfor n in numbers:\n    if n%2=0:\n        print("even")', errorLine: 3, correctLineText: '    if n%2==0:', explanation: 'Logic Error: Use "==" for comparison.' },
+            { id: 'log-02', code: 'i = 0\nwhile i < 5:\n    print(i)', errorLine: 3, correctLineText: '    i += 1', explanation: 'Logic Error: Infinite loop, counter not incremented.' }
+        ];
+
+        // --- Game State ---
+        let currentQuestions = [];
+        let currentSnippetIndex = 0;
+        let score = 0;
+        let lineSelected = false;
+        let timerInterval;
+        let questionStartTime;
+        let studentName = '';
+        let userId = null;
+        const QUESTION_TIME_LIMIT = 15000;
+        const MAX_SCORE_PER_QUESTION = 100;
+
+        // --- Game Functions ---
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+        }
+
+        async function recordAnswer(questionId, isCorrect, points, timeTaken) {
+            try {
+                await addDoc(collection(db, "game_sessions"), {
+                    userId: userId,
+                    studentName: studentName,
+                    questionId: questionId,
+                    isCorrect: isCorrect,
+                    score: points,
+                    timeTakenMs: timeTaken,
+                    timestamp: serverTimestamp()
+                });
+            } catch (error) {
+                console.error("Error writing document: ", error);
+            }
+        }
+
+        function loadSnippet(index) {
+            lineSelected = false;
+            const snippet = currentQuestions[index];
+            codeSnippetEl.innerHTML = snippet.code.split('\n').map((line, i) => `<div class="code-line-container" data-line="${i + 1}"><span class="line-number">${i + 1}</span><span>${line}</span></div>`).join('');
+            questionCounterEl.textContent = `Question ${index + 1} of ${currentQuestions.length}`;
+            document.getElementById('instructions').textContent = '1. Click the line of code with the error.';
+            document.getElementById('code-snippet-wrapper').classList.add('clickable');
+            feedbackContainer.classList.add('hidden');
+            document.getElementById('answer-area').classList.add('hidden');
+            nextBtn.classList.add('hidden');
+            submitBtn.disabled = false;
+            answerInput.disabled = false;
+            answerInput.value = '';
+            const progressPercent = (index / currentQuestions.length) * 100;
+            progressSnakeEl.style.width = `${progressPercent}%`;
+            clearInterval(timerInterval);
+            timerBarEl.style.width = '100%';
+            questionStartTime = Date.now();
+            timerInterval = setInterval(() => {
+                const elapsed = Date.now() - questionStartTime;
+                const remainingPercent = Math.max(0, (QUESTION_TIME_LIMIT - elapsed) / QUESTION_TIME_LIMIT * 100);
+                timerBarEl.style.width = `${remainingPercent}%`;
+                if (elapsed >= QUESTION_TIME_LIMIT) handleTimesUp();
+            }, 100);
+        }
+
+        function handleTimesUp() {
+            clearInterval(timerInterval);
+            submitBtn.disabled = true;
+            answerInput.disabled = true;
+            const currentSnippet = currentQuestions[currentSnippetIndex];
+            const feedbackText = `Time's up!\nThe correct line was: \`${currentSnippet.correctLineText.trim()}\``;
+            showFeedback(false, feedbackText);
+            recordAnswer(currentSnippet.id, false, 0, QUESTION_TIME_LIMIT);
+            if (currentSnippetIndex < currentQuestions.length - 1) {
+                nextBtn.classList.remove('hidden');
+            } else {
+                progressSnakeEl.style.width = '100%';
+                setTimeout(showFinalScore, 2500);
+            }
+        }
+        
+        function handleLineClick(e) {
+            if (lineSelected) return;
+            const lineDiv = e.target.closest('.code-line-container');
+            if (!lineDiv) return;
+            lineSelected = true;
+            lineDiv.classList.add('selected');
+            document.getElementById('instructions').textContent = '2. Now, type the corrected line of code.';
+            document.getElementById('code-snippet-wrapper').classList.remove('clickable');
+            document.getElementById('answer-area').classList.remove('hidden');
+            answerInput.focus();
+        }
+
+        async function checkAnswer() {
+            clearInterval(timerInterval);
+            const timeTaken = Date.now() - questionStartTime;
+            submitBtn.disabled = true;
+            answerInput.disabled = true;
+
+            const currentSnippet = currentQuestions[currentSnippetIndex];
+            const userAnswerText = answerInput.value.trim();
+            const correctLineText = currentSnippet.correctLineText.trim();
+            const selectedLineNumber = lineSelected ? parseInt(document.querySelector('.selected').dataset.line) : -1;
+
+            let isCorrect = false;
+            let points = 0;
+
+            if (selectedLineNumber === currentSnippet.errorLine) {
+                let isTextCorrect = false;
+                if (currentSnippet.validationRegex) {
+                    const regex = new RegExp(currentSnippet.validationRegex);
+                    isTextCorrect = regex.test(userAnswerText);
+                } else {
+                    isTextCorrect = userAnswerText.replace(/\s+/g, ' ') === correctLineText.replace(/\s+/g, ' ');
+                }
+
+                if (isTextCorrect) {
+                    isCorrect = true;
+                    points = Math.floor(Math.max(10, MAX_SCORE_PER_QUESTION * ((QUESTION_TIME_LIMIT - timeTaken) / QUESTION_TIME_LIMIT)));
+                    score += points;
+                    scoreEl.textContent = score;
+                    showFeedback(true, `+${points} points! ${currentSnippet.explanation}`);
+                } else {
+                    showFeedback(false, `You found the right line, but the correction is incorrect.\nCorrect example: \`${correctLineText}\``);
+                }
+            } else {
+                showFeedback(false, `That's not the line with the error.\nThe error is on line ${currentSnippet.errorLine}: \`${currentSnippet.explanation}\``);
+            }
+            
+            await recordAnswer(currentSnippet.id, isCorrect, points, timeTaken);
+
+            if (currentSnippetIndex < currentQuestions.length - 1) {
+                nextBtn.classList.remove('hidden');
+            } else {
+                progressSnakeEl.style.width = '100%';
+                setTimeout(showFinalScore, 2500);
+            }
+        }
+        
+        function showFeedback(isCorrect, explanation) {
+            feedbackMessageEl.textContent = isCorrect ? 'Correct!' : 'Not Quite!';
+            explanationEl.textContent = explanation;
+            feedbackContainer.classList.remove('hidden', 'bg-red-900', 'bg-emerald-900');
+            feedbackContainer.classList.add(isCorrect ? 'bg-emerald-900' : 'bg-red-900');
+        }
+
+        function showFinalScore() {
+            finalScoreEl.textContent = score;
+            finalScoreModal.classList.remove('hidden');
+            finalScoreModal.firstElementChild.classList.add('scale-100');
+            if (typeof confetti === 'function') {
+                confetti({ particleCount: 150, spread: 90, origin: { y: 0.6 } });
+            }
+        }
+
+        function initializeGame() {
+            shuffleArray(allCodeSnippets);
+            currentQuestions = allCodeSnippets.slice(0, 10);
+            currentSnippetIndex = 0;
+            score = 0;
+            scoreEl.textContent = '0';
+            userDisplay.textContent = `Student: ${studentName}`;
+            loadSnippet(currentSnippetIndex);
+            finalScoreModal.classList.add('hidden');
+        }
+
+        // --- Event Listeners ---
+        startBtn.addEventListener('click', () => {
+            signInWithPopup(auth, provider)
+                .then((result) => {
+                    const user = result.user;
+                    userId = user.uid;
+                    studentName = user.displayName;
+                    
+                    startScreen.classList.add('hidden');
+                    gameContainer.classList.remove('hidden');
+                    initializeGame();
+                }).catch((error) => {
+                    console.error("Google sign-in error", error);
+                    if (error.code === 'auth/unauthorized-domain') {
+                        const currentDomain = window.location.hostname;
+                        alert(`Authentication Error: The domain '${currentDomain}' is not authorized for Google Sign-In.\n\nPlease go to your Firebase Console -> Authentication -> Settings -> Authorized domains, and add this domain to the list.`);
+                    } else {
+                        alert("Could not sign in with Google. Please check the console for more details.");
+                    }
+                });
+        });
+
+        codeSnippetEl.addEventListener('click', handleLineClick);
+        submitBtn.addEventListener('click', checkAnswer);
+        answerInput.addEventListener('keydown', (e) => { if (e.key === 'Enter' && !submitBtn.disabled) checkAnswer(); });
+        nextBtn.addEventListener('click', () => {
+            currentSnippetIndex++;
+            if (currentSnippetIndex < currentQuestions.length) loadSnippet(currentSnippetIndex);
+        });
+        restartBtn.addEventListener('click', () => {
+            finalScoreModal.classList.add('hidden');
+            gameContainer.classList.add('hidden');
+            startScreen.classList.remove('hidden');
+        });
+    </script>
+</body>
+</html>
