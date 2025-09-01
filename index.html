@@ -146,7 +146,7 @@
             { id: 'syn-04', code: 'items = [1, 2, 3\nprint(items)', errorLine: 1, correctLineText: 'items = [1, 2, 3]', explanation: 'SyntaxError: The list is missing a closing bracket (]).' },
             { id: 'syn-05', code: 'for i in range(10)\n    print(i)', errorLine: 1, correctLineText: 'for i in range(10):', explanation: 'Syntax Error: A for loop statement must end with a colon (:).' },
             { id: 'syn-06', code: 'x = 1\nelse:\n    x = 2', errorLine: 2, correctLineText: 'if False:', explanation: 'SyntaxError: An "else" statement must be preceded by an "if" or "elif" block.' },
-            { id: 'syn-07', code: 'my_func(a=1, 2)', errorLine: 1, correctLineText: 'my_func(1, a=2)', explanation: 'SyntaxError: A positional argument cannot follow a keyword argument.' },
+            { id: 'syn-07', code: 'add_one = lambda x = x + 1', errorLine: 1, correctLineText: 'add_one = lambda x: x + 1', explanation: 'SyntaxError: The arguments of a lambda function are separated from the expression by a colon (:).' },
             { id: 'syn-08', code: 'class MyClass\n    pass', errorLine: 1, correctLineText: 'class MyClass:', explanation: 'SyntaxError: A class definition must end with a colon (:).' },
             { id: 'syn-09', code: 'name = "Alice"\nprint(f"Hello, {name")', errorLine: 2, correctLineText: 'print(f"Hello, {name}")', explanation: 'SyntaxError: An f-string is missing its closing curly brace (}).' },
             { id: 'syn-10', code: 'try:\n    x = 1/0\nexcept ZeroDivisionError\n    print("Error")', errorLine: 3, correctLineText: 'except ZeroDivisionError:', explanation: 'SyntaxError: An "except" clause must end with a colon (:).' },
@@ -416,4 +416,3 @@
     </script>
 </body>
 </html>
-
