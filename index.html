@@ -81,7 +81,7 @@
         import { getAuth, GoogleAuthProvider, signInWithPopup } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
         import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-        // IMPORTANT: Replace with your Firebase project's configuration
+        // This placeholder will be replaced by the GitHub Actions workflow
         const firebaseConfig = JSON.parse('__FIREBASE_CONFIG__');
 
         // Initialize Firebase
@@ -217,6 +217,10 @@
             if (!lineDiv) return;
             lineSelected = true;
             lineDiv.classList.add('selected');
+            
+            const lineText = lineDiv.querySelector('span:last-child').textContent;
+            answerInput.value = lineText.trim();
+            
             document.getElementById('instructions').textContent = '2. Now, type the corrected line of code.';
             document.getElementById('code-snippet-wrapper').classList.remove('clickable');
             document.getElementById('answer-area').classList.remove('hidden');
@@ -333,3 +337,4 @@
     </script>
 </body>
 </html>
+
